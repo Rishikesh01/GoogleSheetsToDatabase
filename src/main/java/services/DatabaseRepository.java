@@ -15,7 +15,7 @@ import java.util.Scanner;
  */
 
 public class DatabaseRepository {
-    private String str[];
+    private String[] str;
     private int clen;
     private Connection connection = null;
 
@@ -27,7 +27,32 @@ public class DatabaseRepository {
         this.clen = clen;
     }
 
-    private void getConnection() {
+    public static void printSQLException(SQLException ex) {
+        for (Throwable e : ex) {
+            if (e instanceof SQLException) {
+                e.printStackTrace(System.err);
+                System.err.println("SQLState: " + ((SQLException) e).getSQLState());
+                System.err.println("Error Code: " + ((SQLException) e).getErrorCode());
+                System.err.println("Message: " + e.getMessage());
+                Throwable t = ex.getCause();
+                while (t != null) {
+                    System.out.println("Cause: " + t);
+                    t = t.getCause();
+                }
+            }
+        }
+    }
+
+    public static void printBatchUpdateException(BatchUpdateException b) {
+
+        System.err.println("----BatchUpdateException----");
+        System.err.println("SQLState:  " + b.getSQLState());
+        System.err.println("Message:  " + b.getMessage());
+        System.err.println("Vendor:  " + b.getErrorCode());
+        int[] updateCounts = b.getUpdateCounts();
+    }
+
+    void getConnection() {
         try {
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/practise",
                     "root", "password");
@@ -40,7 +65,7 @@ public class DatabaseRepository {
         }
     }
 
-    public Boolean createTable() throws SQLException, SQLSyntaxErrorException {
+    public Boolean createTable() throws SQLException {
         getConnection();
         System.out.println("Enter the Query to Create Table");
         Scanner sc = new Scanner(System.in);
@@ -82,7 +107,7 @@ public class DatabaseRepository {
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_USERS_SQL)) {
             connection.setAutoCommit(false);
             for (Iterator<User> iterator = list.iterator(); iterator.hasNext(); ) {
-                User user = (User) iterator.next();
+                User user = iterator.next();
                 preparedStatement.setInt(1, user.getId());
                 preparedStatement.setString(2, user.getName());
                 preparedStatement.setString(3, user.getEmail());
@@ -98,31 +123,6 @@ public class DatabaseRepository {
         } catch (SQLException e) {
             printSQLException(e);
         }
-    }
-
-    public static void printSQLException(SQLException ex) {
-        for (Throwable e : ex) {
-            if (e instanceof SQLException) {
-                e.printStackTrace(System.err);
-                System.err.println("SQLState: " + ((SQLException) e).getSQLState());
-                System.err.println("Error Code: " + ((SQLException) e).getErrorCode());
-                System.err.println("Message: " + e.getMessage());
-                Throwable t = ex.getCause();
-                while (t != null) {
-                    System.out.println("Cause: " + t);
-                    t = t.getCause();
-                }
-            }
-        }
-    }
-
-    public static void printBatchUpdateException(BatchUpdateException b) {
-
-        System.err.println("----BatchUpdateException----");
-        System.err.println("SQLState:  " + b.getSQLState());
-        System.err.println("Message:  " + b.getMessage());
-        System.err.println("Vendor:  " + b.getErrorCode());
-        int[] updateCounts = b.getUpdateCounts();
     }
 
 
