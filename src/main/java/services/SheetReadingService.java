@@ -29,8 +29,9 @@ public class SheetReadingService {
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
-    private String sheetId;
-    private String range;
+    private final String sheetId;
+    private final String range;
+    private String colNameStr;
 
     public SheetReadingService(String sheetId, String range) {
         this.sheetId = sheetId;
@@ -55,29 +56,35 @@ public class SheetReadingService {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    public void getRow() throws GeneralSecurityException, IOException {
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Sheets service = new Sheets.Builder(HTTP_TRANSPORT, FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-        ValueRange response = service.spreadsheets().values()
-                .get(sheetId, range)
-                .execute();
-        List<List<Object>> values = response.getValues();
-        if (values == null || values.isEmpty()) {
-            System.out.println("No data found.");
-        } else {
-            List<Object> row = values.get(0);
-            String str = row.stream().map(x -> (String) x).collect(Collectors.joining(","));
-            System.out.println("INSERT INTO table(" + str + "()");
+    public void getRow() {
+        final NetHttpTransport HTTP_TRANSPORT;
+        try {
+            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
-            /*
-            Inset into table_name ()
-             */
+            Sheets service = new Sheets.Builder(HTTP_TRANSPORT,
+                    FACTORY
+                    , getCredentials(HTTP_TRANSPORT)
+            ).setApplicationName(APPLICATION_NAME)
+                    .build();
+            ValueRange response = service.spreadsheets().values().get(sheetId, range).execute();
+            List<List<Object>> values = response.getValues();
+            //Check if value is null or is empty
+            if (values == null || values.isEmpty()) {
+                System.out.println("No data found.");
+            } else {
+                /*
+                Iterate through  first row and stream them and join them using commas
+                then loop through remaining list and sort them
+                 */
+                List<Object> colNameList = values.get(0);
+                colNameStr = colNameList.stream().map(x -> (String) x).collect(Collectors.joining(","));
 
-            int i = Integer.parseInt(values.get(1).get(0).toString());
+                for (List<Object> row : values.subList(1, values.size())) {
 
+                }
+            }
+        } catch (GeneralSecurityException | IOException e) {
+            e.printStackTrace();
         }
-
     }
 }

@@ -1,6 +1,7 @@
 package repository;
 
 import domain.User;
+import driver.DriverConnector;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -17,14 +18,17 @@ import java.util.Scanner;
 public class DatabaseRepository {
     private String[] str;
     private int clen;
-    private Connection connection = null;
+    private Connection connection;
+    private final DriverConnector connector;
 
-    public DatabaseRepository() {
+    public DatabaseRepository(DriverConnector connector) {
 
+        this.connector = connector;
     }
 
-    public DatabaseRepository(int clen) {
+    public DatabaseRepository(int clen, DriverConnector connector) {
         this.clen = clen;
+        this.connector = connector;
     }
 
     public static void printSQLException(SQLException ex) {
@@ -52,32 +56,23 @@ public class DatabaseRepository {
         int[] updateCounts = b.getUpdateCounts();
     }
 
-    void getConnection() {
-        try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/practise",
-                    "root", "password");
-
-        } catch (SQLException ex) {
-            // handle any errors
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());
-        }
-    }
-
-    public Boolean createTable() throws SQLException {
-        getConnection();
+    public Boolean createTable() {
+        connection = connector.getConnection();
         System.out.println("Enter the Query to Create Table");
         Scanner sc = new Scanner(System.in);
         String query = sc.nextLine();
         try (Statement stmt = connection.createStatement()) {
             stmt.executeUpdate(query);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.out.println("Check Syntax");
             return false;
         }
         System.out.println("Table Created in DataBase");
-        connection.close();
+        try {
+            connection.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
         return true;
     }
 
@@ -101,8 +96,7 @@ public class DatabaseRepository {
         String INSERT_USERS_SQL = "INSERT INTO user" + "  (id, name, email, gender, sport) VALUES " +
                 " (?, ?, ?, ?, ?);";
 
-        try (Connection connection = DriverManager
-                .getConnection("jdbc:mysql://localhost:3306/practise?useSSL=false", "root", "password");
+        try (Connection connection = connector.getConnection();
              // Step 2:Create a statement using connection object
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_USERS_SQL)) {
             connection.setAutoCommit(false);
