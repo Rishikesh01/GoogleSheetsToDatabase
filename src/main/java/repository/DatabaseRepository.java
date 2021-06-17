@@ -1,6 +1,6 @@
-package services;
+package repository;
 
-import testing.User;
+import domain.User;
 
 import java.sql.*;
 import java.util.ArrayList;
