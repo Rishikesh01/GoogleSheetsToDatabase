@@ -93,7 +93,7 @@ public class DatabaseRepository {
         list.add(new User(300, "Surya", "steve@gmail.com", "F", "123"));
         list.add(new User(400, "Tim", "ramesh@gmail.com", "M", "123"));
 
-        String INSERT_USERS_SQL = "INSERT INTO user" + "  (id, name, email, gender, sport) VALUES " +
+        String INSERT_USERS_SQL = "INSERT INTO users" + "  (id, name, email, gender, sport) VALUES " +
                 " (?, ?, ?, ?, ?);";
 
         try (Connection connection = connector.getConnection();

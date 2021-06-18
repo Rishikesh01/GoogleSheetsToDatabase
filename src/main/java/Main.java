@@ -1,3 +1,4 @@
+import com.beust.jcommander.JCommander;
 import driver.DriverConnector;
 import repository.DatabaseRepository;
 import services.SheetReadingService;
@@ -8,6 +9,11 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         YamlReadingUtil util = new YamlReadingUtil();
+        JCommander cmdArgs =  JCommander
+                .newBuilder()
+                .addObject(util)
+                .build();
+        cmdArgs.parse(args);
         DriverConnector connector = new DriverConnector(util.read());
 
         Scanner sc = new Scanner(System.in);
