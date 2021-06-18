@@ -1,16 +1,24 @@
 package driver;
 
+import domain.ApplicationProperties;
+import lombok.RequiredArgsConstructor;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+@RequiredArgsConstructor
 public class DriverConnector {
-    private Connection connection;
-    public Connection getConnection() {
-        try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/practise",
-                    "root", "password");
+    private final ApplicationProperties properties;
 
+    public Connection getConnection() {
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(
+                    properties.getConnectionURL()
+                    , properties.getUsername()
+                    , properties.getPassword()
+            );
         } catch (SQLException ex) {
             // handle any errors
             System.out.println("SQLException: " + ex.getMessage());
@@ -18,6 +26,6 @@ public class DriverConnector {
             System.out.println("VendorError: " + ex.getErrorCode());
 
         }
-        return  connection;
+        return connection;
     }
 }
