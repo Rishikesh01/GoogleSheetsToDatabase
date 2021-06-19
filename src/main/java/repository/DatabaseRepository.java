@@ -14,12 +14,19 @@ import java.util.Scanner;
 3.separate tables with there year;
 4.
  */
+enum DataTypes
+{
+    INT,VARCHAR,VARCHAR2,REAL,CHAR
+}
+
 
 public class DatabaseRepository {
     private String[] str;
     private int clen;
     private Connection connection;
     private final DriverConnector connector;
+    List<Object> arr = new ArrayList<Object>();
+    DataTypes dt;
 
     public DatabaseRepository(DriverConnector connector) {
 
@@ -119,6 +126,65 @@ public class DatabaseRepository {
         }
     }
 
+    public void getPrimaryKey() throws SQLException {
+        connector.getConnection();
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery("desc user;");
+        ResultSetMetaData rsm = rs.getMetaData();
+        int colCount = rsm.getColumnCount();
+        final String NUL = "NO";
+        final String KEY = "PRI";
+        int pno = 1;
+        out:
+        while (rs.next()) {
 
+            for (int i = 1; i <= (colCount - 2); i++) {
+                if (rs.getString(i).equals(NUL))
+                    if (rs.getString(i + 1).equals(KEY)) {
+                        break out;
+                    }
+            }
+            pno++;
+        }
+        System.out.println(" " + pno);
+    }
+
+    public void getColDataType() throws SQLException {
+        connector.getConnection();
+//        ArrayList dataType <Wrapper> = new ArrayList();
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery("select * from user;");
+        ResultSetMetaData rm = rs.getMetaData();
+        int colCount = rm.getColumnCount();
+        System.out.println("Column Names");
+        System.out.println("Table Name " + rm.getTableName(1));
+        for (int i = 1; i <= colCount; i++) {
+            System.out.print("" + rm.getColumnName(i) + "\t\t");
+        }
+        System.out.println(" ");
+        for (int i = 1; i <= colCount; i++) {
+            System.out.print("" + rm.getColumnTypeName(i) + "\t\t");
+            dt = DataTypes.valueOf(rm.getColumnTypeName(i));
+
+            if ((dt == DataTypes.INT)) {
+                arr.add(10);
+            } else if (dt == (DataTypes.VARCHAR)) {
+                arr.add("String");
+            } else if (dt == (DataTypes.VARCHAR2)) {
+                arr.add("String");
+            } else if (dt == (DataTypes.CHAR)) {
+                arr.add('a');
+            } else if (dt == (DataTypes.REAL)) {
+                arr.add(22.56);
+            }
+
+        }
+        System.out.println(" ");
+        for (Object o : arr) {
+            System.out.println(o.getClass());
+        }
+
+
+    }
 }
 
