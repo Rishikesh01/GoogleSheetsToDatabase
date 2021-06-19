@@ -29,12 +29,12 @@ public class SheetReadingService {
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
-    private final String sheetId;
+    private final String sheetURL;
     private final String range;
     private String colNameStr;
 
-    public SheetReadingService(String sheetId, String range) {
-        this.sheetId = sheetId;
+    public SheetReadingService(String sheetURL, String range) {
+        this.sheetURL = sheetURL;
         this.range = range;
     }
 
@@ -56,6 +56,7 @@ public class SheetReadingService {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
+
     public void getRow() {
         final NetHttpTransport HTTP_TRANSPORT;
         try {
@@ -66,7 +67,9 @@ public class SheetReadingService {
                     , getCredentials(HTTP_TRANSPORT)
             ).setApplicationName(APPLICATION_NAME)
                     .build();
-            ValueRange response = service.spreadsheets().values().get(sheetId, range).execute();
+            ValueRange response = service.spreadsheets().values().get(sheetURL.substring(39)
+                    .split("/")[0], range)
+                    .execute();
             List<List<Object>> values = response.getValues();
             //Check if value is null or is empty
             if (values == null || values.isEmpty()) {
@@ -80,6 +83,9 @@ public class SheetReadingService {
                 colNameStr = colNameList.stream().map(x -> (String) x).collect(Collectors.joining(","));
 
                 for (List<Object> row : values.subList(1, values.size())) {
+                    for (int i = 0; i < row.size(); i++) {
+
+                    }
 
                 }
             }
