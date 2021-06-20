@@ -118,10 +118,13 @@ public class SheetReadingService {
                 //Run thread in background
                 Runnable r = () -> {
                     repository.insertData(batch,colNameStr);
-                    batch.clear();
                 };
                 executor.submit(r);
+                batch.clear();
             }
+
+            list.addAll(rows);
+            batch.add(list);
         }
         executor.shutdown();
     }
