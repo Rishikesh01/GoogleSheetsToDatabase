@@ -13,14 +13,19 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import repository.DatabaseRepository;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class SheetReadingService {
@@ -30,10 +35,13 @@ public class SheetReadingService {
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
     private final String sheetURL;
+
+    private final DatabaseRepository repository;
     private final String range;
     private String colNameStr;
 
-    public SheetReadingService(String sheetURL, String range) {
+    public SheetReadingService(String sheetURL, String range, DatabaseRepository repository) {
+        this.repository = repository;
         this.sheetURL = sheetURL;
         this.range = range;
     }
@@ -56,7 +64,6 @@ public class SheetReadingService {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-
     public void getRow() {
         final NetHttpTransport HTTP_TRANSPORT;
         try {
@@ -77,20 +84,45 @@ public class SheetReadingService {
             } else {
                 /*
                 Iterate through  first row and stream them and join them using commas
-                then loop through remaining list and sort them
                  */
                 List<Object> colNameList = values.get(0);
                 colNameStr = colNameList.stream().map(x -> (String) x).collect(Collectors.joining(","));
+                sortAndBatch(values.subList(1, values.size()));
 
-                for (List<Object> row : values.subList(1, values.size())) {
-                    for (int i = 0; i < row.size(); i++) {
-
-                    }
-
-                }
             }
         } catch (GeneralSecurityException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void sortAndBatch(List<List<Object>> values) {
+        Scanner sc = new Scanner(System.in);
+        String tableName = sc.nextLine();
+        ExecutorService executor = Executors.newCachedThreadPool();
+        int pkColumnName = repository.getPrimaryKey(tableName) - 1;
+        int columnCount = values.get(0).size();
+        String temp = values.get(0).get(pkColumnName).toString().substring(0, 2);
+        List<List<Object>> batch = new ArrayList<>();
+        for (List<Object> rows : values) {
+            List<Object> list = new ArrayList<>();
+            String start = values.get(0).get(pkColumnName).toString().substring(0, 2);
+            for (int i = 0; i < columnCount; i++) {
+                if (!rows.get(pkColumnName).toString().substring(0, 2).equals(temp))
+                    temp = rows.get(pkColumnName).toString();
+                else
+                    list.add(rows.get(i));
+            }
+            if (start.equals(temp)) {
+                batch.add(list);
+            } else {
+                //Run thread in background
+                Runnable r = () -> {
+                    repository.insertData(batch,colNameStr);
+                    batch.clear();
+                };
+                executor.submit(r);
+            }
+        }
+        executor.shutdown();
     }
 }
