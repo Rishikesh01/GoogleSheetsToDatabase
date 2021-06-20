@@ -112,10 +112,44 @@ public class DatabaseRepository {
         return true;
     }
 
-
     public void insertData() {
     }
 
+    public int getPrimaryKey(String tableName) throws SQLException {
+        connection = connector.getConnection();
+        DatabaseMetaData dbData = connection.getMetaData();
+        ResultSet rs = dbData.getPrimaryKeys(null, null, tableName);
+        String primaryKey = "";
+        while (rs.next())
+            primaryKey = rs.getString(4);
+        PreparedStatement preparedStatement = connection.prepareStatement("select * from " + tableName);
+        rs = preparedStatement.executeQuery();
+        for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+            if (rs.getMetaData().getColumnLabel(i).equals(primaryKey))
+                return i;//column number in row
+        }
+        return 0; //means not found
+    }
 
+    public String[] getColDataType(String tableName) {
+        try {
+            connector.getConnection();
+            Statement stmt = connection.createStatement();
+            /*
+            select all columns form table
+            and iterate through all the columns name and save in array
+             */
+            ResultSet rs = stmt.executeQuery("select * from " + tableName);
+            ResultSetMetaData rm = rs.getMetaData();
+            int colCount = rm.getColumnCount();
+            String[] columnType = new String[colCount];
+            for (int i = 1; i <= colCount; i++)
+                columnType[i - 1] = rm.getColumnClassName(i);
+            return columnType;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
 
