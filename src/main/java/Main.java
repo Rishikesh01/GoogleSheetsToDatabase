@@ -35,7 +35,6 @@ public class Main {
         } else {
             System.out.println("Created Table");
         }
-        repo.insertData();
         System.out.println("Inserted Successfully");
     }
 

@@ -1,40 +1,23 @@
 package repository;
 
-import domain.User;
 import driver.DriverConnector;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+
 /*
 1.user input will data with datatype writes query create table();
 2.I need to store record in database with (columns);
 3.separate tables with there year;
 4.
  */
-enum DataTypes
-{
-    INT,VARCHAR,VARCHAR2,REAL,CHAR
-}
-
-
 public class DatabaseRepository {
-    private String[] str;
-    private int clen;
     private Connection connection;
     private final DriverConnector connector;
-    List<Object> arr = new ArrayList<Object>();
-    DataTypes dt;
 
     public DatabaseRepository(DriverConnector connector) {
 
-        this.connector = connector;
-    }
-
-    public DatabaseRepository(int clen, DriverConnector connector) {
-        this.clen = clen;
         this.connector = connector;
     }
 
@@ -55,12 +38,10 @@ public class DatabaseRepository {
     }
 
     public static void printBatchUpdateException(BatchUpdateException b) {
-
         System.err.println("----BatchUpdateException----");
         System.err.println("SQLState:  " + b.getSQLState());
         System.err.println("Message:  " + b.getMessage());
         System.err.println("Vendor:  " + b.getErrorCode());
-        int[] updateCounts = b.getUpdateCounts();
     }
 
     public Boolean createTable() {
@@ -83,108 +64,44 @@ public class DatabaseRepository {
         return true;
     }
 
-    //    public void insertData() throws SQLException {
-//        getConnection();
-//        String query="insert into student(id,name) values(?,?)";
-//        PreparedStatement pt= connection.prepareStatement(query);
-//        pt.setString(1, "1");
-//        pt.setString(2,"harry");
-//
-//        pt.executeUpdate();
-//
-//    }
-    public void insertData() {
-        List<User> list = new ArrayList<>();
-        list.add(new User(100, "Rishikesh", "denial@gmail.com", "M", "123"));
-        list.add(new User(200, "Nk Rahul", "rocky@gmail.com", "M", "123"));
-        list.add(new User(300, "Surya", "steve@gmail.com", "F", "123"));
-        list.add(new User(400, "Tim", "ramesh@gmail.com", "M", "123"));
+    public void insertData(List<List<Object>> list) {
+    }
 
-        String INSERT_USERS_SQL = "INSERT INTO users" + "  (id, name, email, gender, sport) VALUES " +
-                " (?, ?, ?, ?, ?);";
+    public int getPrimaryKey(String tableName) throws SQLException {
+        connection = connector.getConnection();
+        DatabaseMetaData dbData = connection.getMetaData();
+        ResultSet rs = dbData.getPrimaryKeys(null, null, tableName);
+        String primaryKey = "";
+        while (rs.next())
+            primaryKey = rs.getString(4);
+        PreparedStatement preparedStatement = connection.prepareStatement("select * from " + tableName);
+        rs = preparedStatement.executeQuery();
+        for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+            if (rs.getMetaData().getColumnLabel(i).equals(primaryKey))
+                return i;//column number in row
+        }
+        return 0; //means not found
+    }
 
-        try (Connection connection = connector.getConnection();
-             // Step 2:Create a statement using connection object
-             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_USERS_SQL)) {
-            connection.setAutoCommit(false);
-            for (Iterator<User> iterator = list.iterator(); iterator.hasNext(); ) {
-                User user = iterator.next();
-                preparedStatement.setInt(1, user.getId());
-                preparedStatement.setString(2, user.getName());
-                preparedStatement.setString(3, user.getEmail());
-                preparedStatement.setString(4, user.getGender());
-                preparedStatement.setString(5, user.getSport());
-                preparedStatement.addBatch();
-            }
-            preparedStatement.executeBatch();
-            connection.commit();
-            connection.setAutoCommit(true);
-        } catch (BatchUpdateException batchUpdateException) {
-            printBatchUpdateException(batchUpdateException);
+    public String[] getColDataType(String tableName) {
+        try {
+            connector.getConnection();
+            Statement stmt = connection.createStatement();
+            /*
+            select all columns form table
+            and iterate through all the columns name and save in array
+             */
+            ResultSet rs = stmt.executeQuery("select * from " + tableName);
+            ResultSetMetaData rm = rs.getMetaData();
+            int colCount = rm.getColumnCount();
+            String[] columnType = new String[colCount];
+            for (int i = 1; i <= colCount; i++)
+                columnType[i - 1] = rm.getColumnClassName(i);
+            return columnType;
         } catch (SQLException e) {
-            printSQLException(e);
+            e.printStackTrace();
         }
-    }
-
-    public void getPrimaryKey() throws SQLException {
-        connector.getConnection();
-        Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery("desc user;");
-        ResultSetMetaData rsm = rs.getMetaData();
-        int colCount = rsm.getColumnCount();
-        final String NUL = "NO";
-        final String KEY = "PRI";
-        int pno = 1;
-        out:
-        while (rs.next()) {
-
-            for (int i = 1; i <= (colCount - 2); i++) {
-                if (rs.getString(i).equals(NUL))
-                    if (rs.getString(i + 1).equals(KEY)) {
-                        break out;
-                    }
-            }
-            pno++;
-        }
-        System.out.println(" " + pno);
-    }
-
-    public void getColDataType() throws SQLException {
-        connector.getConnection();
-//        ArrayList dataType <Wrapper> = new ArrayList();
-        Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery("select * from user;");
-        ResultSetMetaData rm = rs.getMetaData();
-        int colCount = rm.getColumnCount();
-        System.out.println("Column Names");
-        System.out.println("Table Name " + rm.getTableName(1));
-        for (int i = 1; i <= colCount; i++) {
-            System.out.print("" + rm.getColumnName(i) + "\t\t");
-        }
-        System.out.println(" ");
-        for (int i = 1; i <= colCount; i++) {
-            System.out.print("" + rm.getColumnTypeName(i) + "\t\t");
-            dt = DataTypes.valueOf(rm.getColumnTypeName(i));
-
-            if ((dt == DataTypes.INT)) {
-                arr.add(10);
-            } else if (dt == (DataTypes.VARCHAR)) {
-                arr.add("String");
-            } else if (dt == (DataTypes.VARCHAR2)) {
-                arr.add("String");
-            } else if (dt == (DataTypes.CHAR)) {
-                arr.add('a');
-            } else if (dt == (DataTypes.REAL)) {
-                arr.add(22.56);
-            }
-
-        }
-        System.out.println(" ");
-        for (Object o : arr) {
-            System.out.println(o.getClass());
-        }
-
-
+        return null;
     }
 }
 
