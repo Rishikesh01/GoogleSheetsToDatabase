@@ -92,9 +92,9 @@ public class DatabaseRepository {
                 String padding = new String(
                         new char[maxColWidth[i] - colNames[i].length() + 2]
                 ).replace("\0", " ");
-                System.out.print(colNames[i] + padding);
+                logger.info(colNames[i] + padding);
             }
-            System.out.println();
+            logger.info("\n");
 
             //print column data with appropriate padding
             for (List<String> ls : rows) {
@@ -102,9 +102,9 @@ public class DatabaseRepository {
                     String padding = new String(
                             new char[maxColWidth[i] - ls.get(i).length() + 2]
                     ).replace("\0", " ");
-                    System.out.print(ls.get(i) + padding);
+                    logger.info(ls.get(i) + padding);
                 }
-                System.out.println();
+                logger.info("\n");
 
             }
 
