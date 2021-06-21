@@ -10,20 +10,19 @@ import services.YearBasedSorting;
 import util.YamlReadingUtil;
 
 public class GoogleSheetsToDatabase {
-    private static GoogleSheetsToDatabase instance = null;
+    private static GoogleSheetsToDatabase instance;
 
     private GoogleSheetsToDatabase() {
     }
 
-    public static GoogleSheetsToDatabase run(String[] args) {
+    public static void run(String[] args) {
         if (instance == null){
-            init(args);
-            return instance = new GoogleSheetsToDatabase();
+           instance = new GoogleSheetsToDatabase();
         }
-        return instance;
+        instance.init(args);
     }
 
-    private static void init(String[] args) {
+    private  void init(String[] args) {
         //Read yml file
         YamlReadingUtil util = new YamlReadingUtil();
         //Get external yml file to read
