@@ -15,8 +15,14 @@ import java.util.Scanner;
 
 public class DatabaseRepository {
 
-    private Connection connection;
+    private  Connection connection;
     private final DriverConnector connector;
+
+    public void setColumnNamesStr(String columnNamesStr) {
+        this.columnNamesStr = columnNamesStr;
+    }
+
+    private String columnNamesStr;
 
     public DatabaseRepository(DriverConnector connector) {
 
@@ -112,13 +118,13 @@ public class DatabaseRepository {
         return true;
     }
 
-    public void insertData(List<List<Object>> values,String rowNames) {
+    public  synchronized void insertData(final List<List<Object>> values) {
     }
 
     public int getPrimaryKey(String tableName) {
         try {
             connection = connector.getConnection();
-            DatabaseMetaData dbData = null;
+            DatabaseMetaData dbData;
             dbData = connection.getMetaData();
             ResultSet rs = dbData.getPrimaryKeys(null, null, tableName);
             String primaryKey = "";
@@ -161,4 +167,3 @@ public class DatabaseRepository {
         return null;
     }
 }
-

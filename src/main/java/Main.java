@@ -1,6 +1,7 @@
 import com.beust.jcommander.JCommander;
 import driver.DriverConnector;
 import repository.DatabaseRepository;
+import services.AdmissionYearListService;
 import services.SheetReadingService;
 import util.YamlReadingUtil;
 
@@ -19,6 +20,7 @@ public class Main {
         while (!quit.equals("q")) {
             DriverConnector connector = new DriverConnector(util.read());
             DatabaseRepository repo = new DatabaseRepository(connector);
+            AdmissionYearListService yearListService = new AdmissionYearListService();
 
             Scanner sc = new Scanner(System.in);
             System.out.println("Enter sheetID");
@@ -26,8 +28,8 @@ public class Main {
             System.out.println("Enter Range");
             String range = sc.nextLine();
 
-            SheetReadingService readingService = new SheetReadingService(sheetId, range,repo);
-            readingService.getRow();
+            SheetReadingService readingService = new SheetReadingService(repo,yearListService);
+            readingService.sortAndBatch();
 
      /*   working for user table name
         query is  Create table users(id int,name varchar(20),email varchar(30),gender char(2),sport varchar(20));
