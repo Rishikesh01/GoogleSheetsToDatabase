@@ -15,6 +15,8 @@ import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import domain.AdmissionYear;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import repository.DatabaseRepository;
 
 import java.io.FileNotFoundException;
@@ -37,6 +39,7 @@ public class SheetReadingService {
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+    private static Logger logger = LoggerFactory.getLogger(SheetReadingService.class);
 
     private final DatabaseRepository repository;
     private final AdmissionYearListService yearListService;
@@ -44,7 +47,7 @@ public class SheetReadingService {
     private String tableName;
 
     public  void initialize(){
-        System.out.println("Enter tableName");
+        logger.info("Enter tableName");
         Scanner sc = new Scanner(System.in);
         tableName=sc.nextLine();
         sortAndBatch();
@@ -71,9 +74,9 @@ public class SheetReadingService {
     private List<List<Object>> getRows() {
 
         Scanner sc = new Scanner(System.in);
-        System.out.println("Enter sheetURL");
+        logger.info("Enter sheetURL");
         String sheetURL = sc.nextLine();
-        System.out.println("Enter Range");
+        logger.info("Enter Range");
         String range = sc.nextLine();
         sc.close();
 
@@ -93,7 +96,7 @@ public class SheetReadingService {
             values = response.getValues();
             //Check if value is null or is empty
             if (values == null || values.isEmpty()) {
-                System.out.println("No data found.");
+                logger.info("No data found.");
             } else {
                 /*
                 Iterate through  first row and stream them and join them using commas

@@ -1,6 +1,8 @@
 package repository;
 
 import driver.DriverConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -15,33 +17,33 @@ import java.util.Scanner;
  */
 
 public class DatabaseRepository {
-
+    private String columnNamesStr;
     private Connection connection;
     private final DriverConnector connector;
 
-    public void setColumnNamesStr(String columnNamesStr) {
-        this.columnNamesStr = columnNamesStr;
-    }
-
-    private String columnNamesStr;
+    private static Logger logger = LoggerFactory.getLogger(DatabaseRepository.class);
 
     public DatabaseRepository(DriverConnector connector) {
 
         this.connector = connector;
     }
 
+    public void setColumnNamesStr(String columnNamesStr) {
+        this.columnNamesStr = columnNamesStr;
+    }
+
     public void initialize(List<List<Object>> values){
         createTable();
         insertData(new LinkedList<>(values));
         Scanner sc = new Scanner(System.in);
-        System.out.println("Enter 1 to run custom select query");
+        logger.info("Enter 1 to run custom select query");
         int option = sc.nextInt();
         while(option == 1 ){
-            System.out.println("Enter the query");
+            logger.info("Enter the query");
             sc.nextLine();
             String sql = sc.nextLine();
             queryPrinter(sql);
-            System.out.println(" To run again press 1");
+            logger.info(" To run again press 1");
             option = sc.nextInt();
         }
 
@@ -125,14 +127,14 @@ public class DatabaseRepository {
          */
         try {
             connection = connector.getConnection();
-            System.out.println("Enter the Query to Create Table");
+            logger.info("Enter the Query to Create Table");
             Scanner sc = new Scanner(System.in);
             String query = sc.nextLine();
             Statement stmt = connection.createStatement();
             stmt.executeUpdate(query);
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Table not created");
+            logger.info("Table not created");
         }
     }
 
