@@ -13,6 +13,9 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import domain.AdmissionYear;
+import lombok.RequiredArgsConstructor;
+import repository.DatabaseRepository;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -20,23 +23,23 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 public class SheetReadingService {
     private static final String APPLICATION_NAME = "Desktop 1";
     private static final JsonFactory FACTORY = JacksonFactory.getDefaultInstance();
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
-    private final String sheetURL;
-    private final String range;
-    private String colNameStr;
 
-    public SheetReadingService(String sheetURL, String range) {
-        this.sheetURL = sheetURL;
-        this.range = range;
-    }
+    private final DatabaseRepository repository;
+    private final AdmissionYearListService yearListService;
 
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
@@ -56,9 +59,17 @@ public class SheetReadingService {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
+    private List<List<Object>> getRows() {
 
-    public void getRow() {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter sheetURL");
+        String sheetURL = sc.nextLine();
+        System.out.println("Enter Range");
+        String range = sc.nextLine();
+        sc.close();
+
         final NetHttpTransport HTTP_TRANSPORT;
+        List<List<Object>> values;
         try {
             HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
@@ -70,27 +81,68 @@ public class SheetReadingService {
             ValueRange response = service.spreadsheets().values().get(sheetURL.substring(39)
                     .split("/")[0], range)
                     .execute();
-            List<List<Object>> values = response.getValues();
+            values = response.getValues();
             //Check if value is null or is empty
             if (values == null || values.isEmpty()) {
                 System.out.println("No data found.");
             } else {
                 /*
                 Iterate through  first row and stream them and join them using commas
-                then loop through remaining list and sort them
                  */
                 List<Object> colNameList = values.get(0);
-                colNameStr = colNameList.stream().map(x -> (String) x).collect(Collectors.joining(","));
-
-                for (List<Object> row : values.subList(1, values.size())) {
-                    for (int i = 0; i < row.size(); i++) {
-
-                    }
-
-                }
+                String colNameStr = colNameList.stream().map(x -> (String) x).collect(Collectors.joining(","));
+                repository.setColumnNamesStr(colNameStr);
+                return values.subList(1, values.size());
             }
         } catch (GeneralSecurityException | IOException e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void sortAndBatch() {
+        /*
+        get google sheet rows.
+        take user input.
+        Make a Executors pool
+         */
+        List<List<Object>> values = getRows();
+        Scanner sc = new Scanner(System.in);
+        String tableName = sc.nextLine();
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+        /*
+        get primary key from repository and column count form first row
+         */
+        int pkColumnName = repository.getPrimaryKey(tableName) - 1;
+        assert values != null;
+
+        //get list of years present and make list called batch
+        AdmissionYear year = (AdmissionYear) yearListService.getListOfYear(values, pkColumnName).toArray()[0];
+        int yearOfAdmission = year.getYear();
+        List<List<Object>> batch = new LinkedList<>();
+        /*
+        start iterating rows and make new list at the beginning  of iteration and add elements.
+        Parse the column which is supposed to be primary key and its starting  2 letters are year in which student
+        took admission to integer
+         */
+        for (List<Object> rows : values) {
+            List<Object> currentList = new LinkedList<>();
+            int currentYearInRow = Integer.parseInt(rows.get(pkColumnName).toString().substring(0, 2));
+            /*
+            check whether if current year in the row is same as first year of admission.
+            if it is add the row to current list and add the current lis to batch.
+            if it is not same then update the year of admission and and pass the batch to
+            repository and run it in another thread
+             */
+            if (currentYearInRow != yearOfAdmission) {
+                yearOfAdmission = Integer.parseInt(rows.get(pkColumnName).toString().substring(0, 2));
+                executor.submit(() -> repository.insertData(new LinkedList<>(batch)));
+                batch.clear();
+                currentList.addAll(rows);
+            } else {
+                currentList.addAll(rows);
+                batch.add(currentList);
+            }
         }
     }
 }

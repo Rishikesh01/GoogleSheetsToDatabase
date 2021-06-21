@@ -17,7 +17,6 @@ public class YamlReadingUtil {
     @Parameter(
             names = {"--application-config", "-C"},
             description = "location of other application.yaml you want to load"
-
     )
     private String fileLocation;
 

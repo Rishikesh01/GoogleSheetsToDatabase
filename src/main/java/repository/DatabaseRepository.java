@@ -15,8 +15,14 @@ import java.util.Scanner;
 
 public class DatabaseRepository {
 
-    private Connection connection;
+    private  Connection connection;
     private final DriverConnector connector;
+
+    public void setColumnNamesStr(String columnNamesStr) {
+        this.columnNamesStr = columnNamesStr;
+    }
+
+    private String columnNamesStr;
 
     public DatabaseRepository(DriverConnector connector) {
 
@@ -112,21 +118,30 @@ public class DatabaseRepository {
         return true;
     }
 
-    public void insertData() {
+    public  synchronized void insertData(final List<List<Object>> values) {
     }
 
-    public int getPrimaryKey(String tableName) throws SQLException {
-        connection = connector.getConnection();
-        DatabaseMetaData dbData = connection.getMetaData();
-        ResultSet rs = dbData.getPrimaryKeys(null, null, tableName);
-        String primaryKey = "";
-        while (rs.next())
-            primaryKey = rs.getString(4);
-        PreparedStatement preparedStatement = connection.prepareStatement("select * from " + tableName);
-        rs = preparedStatement.executeQuery();
-        for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-            if (rs.getMetaData().getColumnLabel(i).equals(primaryKey))
-                return i;//column number in row
+    public int getPrimaryKey(String tableName) {
+        try {
+            connection = connector.getConnection();
+            DatabaseMetaData dbData;
+            dbData = connection.getMetaData();
+            ResultSet rs = dbData.getPrimaryKeys(null, null, tableName);
+            String primaryKey = "";
+
+            while (rs.next())
+                primaryKey = rs.getString(4);
+
+            PreparedStatement preparedStatement = connection.prepareStatement("select * from " + tableName);
+            rs = preparedStatement.executeQuery();
+
+            for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                if (rs.getMetaData().getColumnLabel(i).equals(primaryKey))
+                    return i;//column number in row
+            }
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
         return 0; //means not found
     }
@@ -152,4 +167,3 @@ public class DatabaseRepository {
         return null;
     }
 }
-
