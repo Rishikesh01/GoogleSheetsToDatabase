@@ -41,18 +41,6 @@ public class SheetReadingService {
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
     private static Logger logger = LoggerFactory.getLogger(SheetReadingService.class);
 
-    private final DatabaseRepository repository;
-    private final AdmissionYearListService yearListService;
-
-    private String tableName;
-
-    public  void initialize(){
-        logger.info("Enter tableName");
-        Scanner sc = new Scanner(System.in);
-        tableName=sc.nextLine();
-        sortAndBatch();
-    }
-
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
         InputStream in = SheetReadingService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
@@ -71,8 +59,7 @@ public class SheetReadingService {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    private List<List<Object>> getRows() {
-
+    public List<List<Object>> getRows() {
         Scanner sc = new Scanner(System.in);
         logger.info("Enter sheetURL");
         String sheetURL = sc.nextLine();
@@ -101,59 +88,12 @@ public class SheetReadingService {
                 /*
                 Iterate through  first row and stream them and join them using commas
                  */
-                List<Object> colNameList = values.get(0);
-                String colNameStr = colNameList.stream().map(x -> (String) x).collect(Collectors.joining(","));
-                repository.setColumnNamesStr(colNameStr);
-                return values.subList(1, values.size());
+
+                return values;
             }
         } catch (GeneralSecurityException | IOException e) {
             e.printStackTrace();
         }
         return null;
-    }
-
-    private void sortAndBatch() {
-        /*
-        get google sheet rows.
-        take user input.
-        Make a Executors pool
-         */
-        List<List<Object>> values = getRows();
-
-        ExecutorService executor = Executors.newFixedThreadPool(5);
-        /*
-        get primary key from repository and column count form first row
-         */
-        int pkColumnName = repository.getPrimaryKey(tableName) - 1;
-        assert values != null;
-
-        //get list of years present and make list called batch
-        AdmissionYear year = (AdmissionYear) yearListService.getListOfYear(values, pkColumnName).toArray()[0];
-        int yearOfAdmission = year.getYear();
-        List<List<Object>> batch = new LinkedList<>();
-        /*
-        start iterating rows and make new list at the beginning  of iteration and add elements.
-        Parse the column which is supposed to be primary key and its starting  2 letters are year in which student
-        took admission to integer
-         */
-        for (List<Object> rows : values) {
-            List<Object> currentList = new LinkedList<>();
-            int currentYearInRow = Integer.parseInt(rows.get(pkColumnName).toString().substring(0, 2));
-            /*
-            check whether if current year in the row is same as first year of admission.
-            if it is add the row to current list and add the current lis to batch.
-            if it is not same then update the year of admission and and pass the batch to
-            repository and run it in another thread
-             */
-            if (currentYearInRow != yearOfAdmission) {
-                yearOfAdmission = Integer.parseInt(rows.get(pkColumnName).toString().substring(0, 2));
-                executor.submit(()->repository.initialize(new LinkedList<>(batch)));
-                batch.clear();
-                currentList.addAll(rows);
-            } else {
-                currentList.addAll(rows);
-                batch.add(currentList);
-            }
-        }
     }
 }

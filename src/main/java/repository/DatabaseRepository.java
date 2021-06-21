@@ -17,28 +17,33 @@ import java.util.Scanner;
  */
 
 public class DatabaseRepository {
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseRepository.class);
+    private final DriverConnector connector;
     private String columnNamesStr;
     private Connection connection;
-    private final DriverConnector connector;
-
-    private static Logger logger = LoggerFactory.getLogger(DatabaseRepository.class);
 
     public DatabaseRepository(DriverConnector connector) {
-
         this.connector = connector;
+    }
+
+    public static void printBatchUpdateException(BatchUpdateException b) {
+        System.err.println("----BatchUpdateException----");
+        System.err.println("SQLState:  " + b.getSQLState());
+        System.err.println("Message:  " + b.getMessage());
+        System.err.println("Vendor:  " + b.getErrorCode());
     }
 
     public void setColumnNamesStr(String columnNamesStr) {
         this.columnNamesStr = columnNamesStr;
     }
 
-    public void initialize(List<List<Object>> values){
+    public void initialize(List<List<Object>> values) {
         createTable();
         insertData(new LinkedList<>(values));
         Scanner sc = new Scanner(System.in);
         logger.info("Enter 1 to run custom select query");
         int option = sc.nextInt();
-        while(option == 1 ){
+        while (option == 1) {
             logger.info("Enter the query");
             sc.nextLine();
             String sql = sc.nextLine();
@@ -48,6 +53,7 @@ public class DatabaseRepository {
         }
 
     }
+
     /*
     Prints the queried sql command in neat formatted way
      */
@@ -113,13 +119,6 @@ public class DatabaseRepository {
         }
     }
 
-    public static void printBatchUpdateException(BatchUpdateException b) {
-        System.err.println("----BatchUpdateException----");
-        System.err.println("SQLState:  " + b.getSQLState());
-        System.err.println("Message:  " + b.getMessage());
-        System.err.println("Vendor:  " + b.getErrorCode());
-    }
-
     public void createTable() {
          /*   working for user table name
         query is  Create table users
@@ -138,7 +137,7 @@ public class DatabaseRepository {
         }
     }
 
-    public synchronized void insertData(final List<List<Object>> values) {
+    public void insertData(final List<List<Object>> values) {
     }
 
     public int getPrimaryKey(String tableName) {
