@@ -4,6 +4,7 @@ import driver.DriverConnector;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 /*
@@ -15,7 +16,7 @@ import java.util.Scanner;
 
 public class DatabaseRepository {
 
-    private  Connection connection;
+    private Connection connection;
     private final DriverConnector connector;
 
     public void setColumnNamesStr(String columnNamesStr) {
@@ -29,6 +30,25 @@ public class DatabaseRepository {
         this.connector = connector;
     }
 
+    public void initialize(List<List<Object>> values){
+        createTable();
+        insertData(new LinkedList<>(values));
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter 1 to run custom select query");
+        int option = sc.nextInt();
+        while(option == 1 ){
+            System.out.println("Enter the query");
+            sc.nextLine();
+            String sql = sc.nextLine();
+            queryPrinter(sql);
+            System.out.println(" To run again press 1");
+            option = sc.nextInt();
+        }
+
+    }
+    /*
+    Prints the queried sql command in neat formatted way
+     */
     public void queryPrinter(String sql) {
         try {
             /*
@@ -98,27 +118,25 @@ public class DatabaseRepository {
         System.err.println("Vendor:  " + b.getErrorCode());
     }
 
-    public Boolean createTable() {
-        connection = connector.getConnection();
-        System.out.println("Enter the Query to Create Table");
-        Scanner sc = new Scanner(System.in);
-        String query = sc.nextLine();
-        try (Statement stmt = connection.createStatement()) {
+    public void createTable() {
+         /*   working for user table name
+        query is  Create table users
+        (id int,name varchar(20),email varchar(30),gender char(2),sport varchar(20));
+         */
+        try {
+            connection = connector.getConnection();
+            System.out.println("Enter the Query to Create Table");
+            Scanner sc = new Scanner(System.in);
+            String query = sc.nextLine();
+            Statement stmt = connection.createStatement();
             stmt.executeUpdate(query);
         } catch (SQLException e) {
-            System.out.println("Check Syntax");
-            return false;
+            e.printStackTrace();
+            System.out.println("Table not created");
         }
-        System.out.println("Table Created in DataBase");
-        try {
-            connection.close();
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-        return true;
     }
 
-    public  synchronized void insertData(final List<List<Object>> values) {
+    public synchronized void insertData(final List<List<Object>> values) {
     }
 
     public int getPrimaryKey(String tableName) {

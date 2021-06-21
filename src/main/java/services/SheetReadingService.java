@@ -41,6 +41,15 @@ public class SheetReadingService {
     private final DatabaseRepository repository;
     private final AdmissionYearListService yearListService;
 
+    private String tableName;
+
+    public  void initialize(){
+        System.out.println("Enter tableName");
+        Scanner sc = new Scanner(System.in);
+        tableName=sc.nextLine();
+        sortAndBatch();
+    }
+
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
         InputStream in = SheetReadingService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
@@ -100,15 +109,14 @@ public class SheetReadingService {
         return null;
     }
 
-    public void sortAndBatch() {
+    private void sortAndBatch() {
         /*
         get google sheet rows.
         take user input.
         Make a Executors pool
          */
         List<List<Object>> values = getRows();
-        Scanner sc = new Scanner(System.in);
-        String tableName = sc.nextLine();
+
         ExecutorService executor = Executors.newFixedThreadPool(5);
         /*
         get primary key from repository and column count form first row
@@ -136,7 +144,7 @@ public class SheetReadingService {
              */
             if (currentYearInRow != yearOfAdmission) {
                 yearOfAdmission = Integer.parseInt(rows.get(pkColumnName).toString().substring(0, 2));
-                executor.submit(() -> repository.insertData(new LinkedList<>(batch)));
+                executor.submit(()->repository.initialize(new LinkedList<>(batch)));
                 batch.clear();
                 currentList.addAll(rows);
             } else {
