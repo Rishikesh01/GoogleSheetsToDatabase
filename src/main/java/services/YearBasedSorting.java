@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.DatabaseRepository;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -15,11 +15,12 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class YearBasedSorting implements SortingService {
-    private static Logger logger = LoggerFactory.getLogger(YearBasedSorting.class);
+    private static final Logger logger = LoggerFactory.getLogger(YearBasedSorting.class);
 
-    private final DatabaseRepository repository;
+    private final UserInputService inputService;
     private final AdmissionYearListService yearListService;
     private final SheetReadingService readingService;
+    private final DatabaseRepository repository;
 
     @Override
     public void sortAndBatch() {
@@ -30,31 +31,28 @@ public class YearBasedSorting implements SortingService {
          */
         List<List<Object>> values = readingService.getRows();
         List<Object> colNameList = values.get(0);
-        String colNameStr = colNameList.stream().map(x -> (String) x).collect(Collectors.joining(","));
-        repository.setColumnNamesStr(colNameStr);
+        String colNameStr = colNameList.stream()
+                .map(x -> (String) x)
+                .collect(Collectors.joining(","));
 
         logger.info("Enter tableName");
         Scanner sc = new Scanner(System.in);
         String tableName = sc.nextLine();
 
         ExecutorService executor = Executors.newFixedThreadPool(5);
-        /*
-        get primary key from repository and column count form first row
-         */
-        int pkColumnName = repository.getPrimaryKey(tableName) - 1;
-        assert values != null;
+        int pkColumnName = repository.getPrimaryKey(tableName);
 
         //get list of years present and make list called batch
         AdmissionYear year = (AdmissionYear) yearListService.getListOfYear(values, pkColumnName).toArray()[0];
         int yearOfAdmission = year.getYear();
-        List<List<Object>> batch = new LinkedList<>();
+        List<List<Object>> batch = new ArrayList<>();
         /*
         start iterating rows and make new list at the beginning  of iteration and add elements.
         Parse the column which is supposed to be primary key and its starting  2 letters are year in which student
         took admission to integer
          */
-        for (List<Object> rows : values) {
-            List<Object> currentList = new LinkedList<>();
+        for (List<Object> rows : values.subList(1, values.size())) {
+            List<Object> currentList = new ArrayList<>();
             int currentYearInRow = Integer.parseInt(rows.get(pkColumnName).toString().substring(0, 2));
             /*
             check whether if current year in the row is same as first year of admission.
@@ -64,7 +62,8 @@ public class YearBasedSorting implements SortingService {
              */
             if (currentYearInRow != yearOfAdmission) {
                 yearOfAdmission = Integer.parseInt(rows.get(pkColumnName).toString().substring(0, 2));
-                executor.submit(() -> repository.initialize(new LinkedList<>(batch)));
+                inputService.getTableCreationQuery();
+                executor.submit(() -> repository.insertData(new ArrayList<>(batch), colNameStr));
                 batch.clear();
                 currentList.addAll(rows);
             } else {

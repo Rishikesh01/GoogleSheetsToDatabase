@@ -13,11 +13,9 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import domain.AdmissionYear;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import repository.DatabaseRepository;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,12 +23,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class SheetReadingService {
@@ -39,7 +33,7 @@ public class SheetReadingService {
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
-    private static Logger logger = LoggerFactory.getLogger(SheetReadingService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SheetReadingService.class);
 
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
@@ -85,10 +79,6 @@ public class SheetReadingService {
             if (values == null || values.isEmpty()) {
                 logger.info("No data found.");
             } else {
-                /*
-                Iterate through  first row and stream them and join them using commas
-                 */
-
                 return values;
             }
         } catch (GeneralSecurityException | IOException e) {

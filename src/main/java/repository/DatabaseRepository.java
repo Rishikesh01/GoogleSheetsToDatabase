@@ -1,14 +1,13 @@
 package repository;
 
 import driver.DriverConnector;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
 /*
 1.user input will data with datatype writes query create table();
 2.I need to store record in database with (columns);
@@ -16,42 +15,18 @@ import java.util.Scanner;
 4.
  */
 
+@RequiredArgsConstructor
 public class DatabaseRepository {
     private static final Logger logger = LoggerFactory.getLogger(DatabaseRepository.class);
     private final DriverConnector connector;
-    private String columnNamesStr;
     private Connection connection;
 
-    public DatabaseRepository(DriverConnector connector) {
-        this.connector = connector;
-    }
 
     public static void printBatchUpdateException(BatchUpdateException b) {
         System.err.println("----BatchUpdateException----");
         System.err.println("SQLState:  " + b.getSQLState());
         System.err.println("Message:  " + b.getMessage());
         System.err.println("Vendor:  " + b.getErrorCode());
-    }
-
-    public void setColumnNamesStr(String columnNamesStr) {
-        this.columnNamesStr = columnNamesStr;
-    }
-
-    public void initialize(List<List<Object>> values) {
-        createTable();
-        insertData(new LinkedList<>(values));
-        Scanner sc = new Scanner(System.in);
-        logger.info("Enter 1 to run custom select query");
-        int option = sc.nextInt();
-        while (option == 1) {
-            logger.info("Enter the query");
-            sc.nextLine();
-            String sql = sc.nextLine();
-            queryPrinter(sql);
-            logger.info(" To run again press 1");
-            option = sc.nextInt();
-        }
-
     }
 
     /*
@@ -98,9 +73,9 @@ public class DatabaseRepository {
                 String padding = new String(
                         new char[maxColWidth[i] - colNames[i].length() + 2]
                 ).replace("\0", " ");
-                logger.info(colNames[i] + padding);
+                System.out.print(colNames[i] + padding);
             }
-            logger.info("\n");
+            System.out.println();
 
             //print column data with appropriate padding
             for (List<String> ls : rows) {
@@ -108,9 +83,9 @@ public class DatabaseRepository {
                     String padding = new String(
                             new char[maxColWidth[i] - ls.get(i).length() + 2]
                     ).replace("\0", " ");
-                    logger.info(ls.get(i) + padding);
+                    System.out.print(ls.get(i) + padding);
                 }
-                logger.info("\n");
+                System.out.println();
 
             }
 
@@ -119,16 +94,13 @@ public class DatabaseRepository {
         }
     }
 
-    public void createTable() {
+    public void createTable(String query) {
          /*   working for user table name
         query is  Create table users
         (id int,name varchar(20),email varchar(30),gender char(2),sport varchar(20));
          */
         try {
             connection = connector.getConnection();
-            logger.info("Enter the Query to Create Table");
-            Scanner sc = new Scanner(System.in);
-            String query = sc.nextLine();
             Statement stmt = connection.createStatement();
             stmt.executeUpdate(query);
         } catch (SQLException e) {
@@ -137,7 +109,7 @@ public class DatabaseRepository {
         }
     }
 
-    public void insertData(final List<List<Object>> values) {
+    public void insertData(final List<List<Object>> values, String columnNamesStr) {
     }
 
     public int getPrimaryKey(String tableName) {
