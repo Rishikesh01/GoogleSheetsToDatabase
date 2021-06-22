@@ -15,8 +15,7 @@ public class UserInputService {
     public String getTableName() {
         logger.info("Enter tableName");
         Scanner sc = new Scanner(System.in);
-        String tabelName = sc.nextLine();
-        return tabelName;
+        return sc.nextLine();
     }
 
     public void getTableCreationQuery() {
