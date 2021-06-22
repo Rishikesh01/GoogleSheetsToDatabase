@@ -5,16 +5,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.DatabaseRepository;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 @RequiredArgsConstructor
 public class UserInputService {
     private static final Logger logger = LoggerFactory.getLogger(UserInputService.class);
-    private final  DatabaseRepository repository;
+    private final DatabaseRepository repository;
 
-    public void getTableCreationQuery(){
+    public String getTableName() {
+        logger.info("Enter tableName");
+        Scanner sc = new Scanner(System.in);
+        String tabelName = sc.nextLine();
+        return tabelName;
+    }
+
+    public void getTableCreationQuery() {
         Scanner sc = new Scanner(System.in);
         logger.info("Enter the Query to Create Table");
         String ddl = sc.nextLine();

@@ -8,7 +8,6 @@ import repository.DatabaseRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -35,9 +34,7 @@ public class YearBasedSorting implements SortingService {
                 .map(x -> (String) x)
                 .collect(Collectors.joining(","));
 
-        logger.info("Enter tableName");
-        Scanner sc = new Scanner(System.in);
-        String tableName = sc.nextLine();
+        String tableName = inputService.getTableName();
 
         ExecutorService executor = Executors.newFixedThreadPool(5);
         int pkColumnName = repository.getPrimaryKey(tableName);

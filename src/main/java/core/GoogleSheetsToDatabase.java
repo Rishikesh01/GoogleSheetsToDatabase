@@ -39,6 +39,7 @@ public class GoogleSheetsToDatabase {
         SortingService sortingService = new YearBasedSorting(inputService, yearListService, readingService, repo);
         //point of entry
         sortingService.sortAndBatch();
+        inputService.runCustomSelectQuery();
 
     }
 }
