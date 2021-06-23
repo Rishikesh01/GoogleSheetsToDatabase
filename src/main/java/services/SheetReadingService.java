@@ -82,7 +82,7 @@ public class SheetReadingService {
                 return values;
             }
         } catch (GeneralSecurityException | IOException e) {
-            e.printStackTrace();
+           logger.info(e.getMessage());
         }
         return null;
     }
