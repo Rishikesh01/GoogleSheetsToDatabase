@@ -104,7 +104,7 @@ public class DatabaseRepository {
             Statement stmt = connection.createStatement();
             stmt.executeUpdate(query);
         } catch (SQLException e) {
-            logger.info("Table not created",e);
+            logger.info(e.getMessage());
         }
     }
 

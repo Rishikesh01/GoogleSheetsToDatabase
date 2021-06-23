@@ -3,7 +3,9 @@ package core;
 import com.beust.jcommander.JCommander;
 import driver.DriverConnector;
 import repository.DatabaseRepository;
-import services.*;
+import services.BatchService;
+import services.SheetReadingService;
+import services.UserInputService;
 import util.YamlReadingUtil;
 
 public class GoogleSheetsToDatabase {
@@ -19,12 +21,10 @@ public class GoogleSheetsToDatabase {
     private final DatabaseRepository repo = new DatabaseRepository(connector);
     //start userinputservice
     private final UserInputService inputService = new UserInputService(repo);
-    //Used to year of admission
-    private final AdmissionYearListService yearListService = new AdmissionYearListService();
     //connects to google sheets and makes query to ge get row and then inserts data in db
     private final SheetReadingService readingService = new SheetReadingService();
     //SortingService
-    private final BatchService batchService = new BatchService(inputService, yearListService, readingService, repo);
+    private final BatchService batchService = new BatchService(inputService, readingService, repo);
 
     private GoogleSheetsToDatabase() {
     }

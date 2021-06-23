@@ -19,7 +19,6 @@ public class BatchService {
     private static final int STARTING_INDEX = 0;
     private static final int LAST_INDEX = 2;
     private final UserInputService inputService;
-    private final AdmissionYearListService yearListService;
     private final SheetReadingService readingService;
     private final DatabaseRepository repository;
 
@@ -41,8 +40,7 @@ public class BatchService {
         int pkColumnName = repository.getPrimaryKey(tableName);
 
         //get list of years present and make list called batch
-        AdmissionYear year = (AdmissionYear) yearListService.getListOfYear(values, pkColumnName).toArray()[0];
-        int yearOfAdmission = year.getYear();
+        int yearOfAdmission = values.get(1).indexOf(pkColumnName);
         List<List<Object>> batch = new ArrayList<>();
         /**
          start iterating rows and make new list at the beginning  of iteration and add elements.
