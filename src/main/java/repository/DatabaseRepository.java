@@ -29,14 +29,14 @@ public class DatabaseRepository {
         System.err.println("Vendor:  " + b.getErrorCode());
     }
 
-    /*
-    Prints the queried sql command in neat formatted way
+    /**
+     * Prints the queried sql command in neat formatted way
      */
     public void queryPrinter(String sql) {
         try {
-            /*
-            formula for padding:
-            highest char length in column - current column data char length +2
+            /**
+             * formula for padding:
+             *highest char length in column - current column data char length +2
              */
 
             connection = connector.getConnection();
@@ -49,10 +49,10 @@ public class DatabaseRepository {
             String[] colNames = new String[columnCount];
             List<List<String>> rows = new ArrayList<>(20);
 
-             /*
-             get column names in array then
-             add the length of the column name in maxColWidth array to have minimum value
-              */
+            /**
+             *get column names in array then
+             *add the length of the column name in maxColWidth array to have minimum value
+             */
             for (int i = 1; i <= columnCount; i++) {
                 colNames[i - 1] = metaData.getColumnLabel(i);
                 maxColWidth[i - 1] = colNames[i - 1].length();
@@ -104,8 +104,7 @@ public class DatabaseRepository {
             Statement stmt = connection.createStatement();
             stmt.executeUpdate(query);
         } catch (SQLException e) {
-            e.printStackTrace();
-            logger.info("Table not created");
+            logger.info("Table not created",e);
         }
     }
 
@@ -141,9 +140,9 @@ public class DatabaseRepository {
         try {
             connector.getConnection();
             Statement stmt = connection.createStatement();
-            /*
-            select all columns form table
-            and iterate through all the columns name and save in array
+            /**
+             select all columns form table
+             and iterate through all the columns name and save in array
              */
             ResultSet rs = stmt.executeQuery("select * from " + tableName);
             ResultSetMetaData rm = rs.getMetaData();

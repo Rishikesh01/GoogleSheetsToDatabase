@@ -11,7 +11,7 @@ import java.util.Scanner;
 public class UserInputService {
     private static final Logger logger = LoggerFactory.getLogger(UserInputService.class);
     private final DatabaseRepository repository;
-
+    private static final int OPTION = 1;
     public String getTableName() {
         logger.info("Enter tableName");
         Scanner sc = new Scanner(System.in);
@@ -29,7 +29,7 @@ public class UserInputService {
         Scanner sc = new Scanner(System.in);
         logger.info("Enter 1 to run custom select query");
         int option = sc.nextInt();
-        while (option == 1) {
+        while (option == OPTION) {
             logger.info("Enter the query");
             sc.nextLine();
             String sql = sc.nextLine();

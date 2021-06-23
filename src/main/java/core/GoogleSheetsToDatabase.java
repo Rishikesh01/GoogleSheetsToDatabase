@@ -9,6 +9,23 @@ import util.YamlReadingUtil;
 public class GoogleSheetsToDatabase {
     private static GoogleSheetsToDatabase instance;
 
+    //Read yml file
+    private final YamlReadingUtil util = new YamlReadingUtil();
+    //Get external yml file to read
+    private final JCommander cmdArgs = JCommander.newBuilder().addObject(util).build();
+    //Get DataBase connection
+    private final DriverConnector connector = new DriverConnector(util.read());
+    //Repository
+    private final DatabaseRepository repo = new DatabaseRepository(connector);
+    //start userinputservice
+    private final UserInputService inputService = new UserInputService(repo);
+    //Used to year of admission
+    private final AdmissionYearListService yearListService = new AdmissionYearListService();
+    //connects to google sheets and makes query to ge get row and then inserts data in db
+    private final SheetReadingService readingService = new SheetReadingService();
+    //SortingService
+    private final BatchService batchService = new BatchService(inputService, yearListService, readingService, repo);
+
     private GoogleSheetsToDatabase() {
     }
 
@@ -20,26 +37,8 @@ public class GoogleSheetsToDatabase {
     }
 
     private void init(String[] args) {
-        //Read yml file
-        YamlReadingUtil util = new YamlReadingUtil();
-        //Get external yml file to read
-        JCommander cmdArgs = JCommander.newBuilder().addObject(util).build();
         cmdArgs.parse(args);
-        //Get DataBase connection
-        DriverConnector connector = new DriverConnector(util.read());
-        //Repository
-        DatabaseRepository repo = new DatabaseRepository(connector);
-        //start userinputservice
-        UserInputService inputService = new UserInputService(repo);
-        //Used to year of admission
-        AdmissionYearListService yearListService = new AdmissionYearListService();
-        //connects to google sheets and makes query to ge get row and then inserts data in db
-        SheetReadingService readingService = new SheetReadingService();
-        //SortingService
-        SortingService sortingService = new YearBasedSorting(inputService, yearListService, readingService, repo);
-        //point of entry
-        sortingService.sortAndBatch();
+        batchService.batch();
         inputService.runCustomSelectQuery();
-
     }
 }
