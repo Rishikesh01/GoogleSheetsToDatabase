@@ -195,11 +195,18 @@ public class DatabaseRepository {
             }
             pStatement.addBatch();
         }
-        long []Bt = pStatement.executeLargeBatch();
+        long []bt = pStatement.executeLargeBatch();
         /* To check all query Exceuted Succssfully
             0-> unsuccessfull
             1-> succesfull
         */
+        for(long val:bt)
+        System.out.print(val);
+        /* checks Wheater Query is Successfully inserted
+            or not eg:0 0 1 0 0 0 1 0 
+        */
+
+        System.out.println();
         connection.commit();
         connection.setAutoCommit(true);
         System.out.println("Susscessfully Inserted in Database\n");    
