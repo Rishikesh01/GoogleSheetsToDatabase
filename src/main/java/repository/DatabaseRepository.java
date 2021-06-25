@@ -1,11 +1,13 @@
 package repository;
 
 import driver.DriverConnector;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 /*
 1.user input will data with datatype writes query create table();
 2.I need to store record in database with (columns);
@@ -13,27 +15,28 @@ import java.util.Scanner;
 4.
  */
 
+@RequiredArgsConstructor
 public class DatabaseRepository {
-
-    private  Connection connection;
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseRepository.class);
     private final DriverConnector connector;
+    private Connection connection;
 
-    public void setColumnNamesStr(String columnNamesStr) {
-        this.columnNamesStr = columnNamesStr;
+
+    public static void printBatchUpdateException(BatchUpdateException b) {
+        System.err.println("----BatchUpdateException----");
+        System.err.println("SQLState:  " + b.getSQLState());
+        System.err.println("Message:  " + b.getMessage());
+        System.err.println("Vendor:  " + b.getErrorCode());
     }
 
-    private String columnNamesStr;
-
-    public DatabaseRepository(DriverConnector connector) {
-
-        this.connector = connector;
-    }
-
+    /**
+     * Prints the queried sql command in neat formatted way
+     */
     public void queryPrinter(String sql) {
         try {
-            /*
-            formula for padding:
-            highest char length in column - current column data char length +2
+            /**
+             * formula for padding:
+             *highest char length in column - current column data char length +2
              */
 
             connection = connector.getConnection();
@@ -46,10 +49,10 @@ public class DatabaseRepository {
             String[] colNames = new String[columnCount];
             List<List<String>> rows = new ArrayList<>(20);
 
-             /*
-             get column names in array then
-             add the length of the column name in maxColWidth array to have minimum value
-              */
+            /**
+             *get column names in array then
+             *add the length of the column name in maxColWidth array to have minimum value
+             */
             for (int i = 1; i <= columnCount; i++) {
                 colNames[i - 1] = metaData.getColumnLabel(i);
                 maxColWidth[i - 1] = colNames[i - 1].length();
@@ -91,34 +94,21 @@ public class DatabaseRepository {
         }
     }
 
-    public static void printBatchUpdateException(BatchUpdateException b) {
-        System.err.println("----BatchUpdateException----");
-        System.err.println("SQLState:  " + b.getSQLState());
-        System.err.println("Message:  " + b.getMessage());
-        System.err.println("Vendor:  " + b.getErrorCode());
-    }
-
-    public Boolean createTable() {
-        connection = connector.getConnection();
-        System.out.println("Enter the Query to Create Table");
-        Scanner sc = new Scanner(System.in);
-        String query = sc.nextLine();
-        try (Statement stmt = connection.createStatement()) {
+    public void createTable(String query) {
+         /*   working for user table name
+        query is  Create table users
+        (id int,name varchar(20),email varchar(30),gender char(2),sport varchar(20));
+         */
+        try {
+            connection = connector.getConnection();
+            Statement stmt = connection.createStatement();
             stmt.executeUpdate(query);
         } catch (SQLException e) {
-            System.out.println("Check Syntax");
-            return false;
+            logger.info(e.getMessage());
         }
-        System.out.println("Table Created in DataBase");
-        try {
-            connection.close();
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-        return true;
     }
 
-    public  synchronized void insertData(final List<List<Object>> values) {
+    public void insertData(final List<List<Object>> values, String columnNamesStr, String tableName) {
     }
 
     public int getPrimaryKey(String tableName) {
@@ -150,9 +140,9 @@ public class DatabaseRepository {
         try {
             connector.getConnection();
             Statement stmt = connection.createStatement();
-            /*
-            select all columns form table
-            and iterate through all the columns name and save in array
+            /**
+             select all columns form table
+             and iterate through all the columns name and save in array
              */
             ResultSet rs = stmt.executeQuery("select * from " + tableName);
             ResultSetMetaData rm = rs.getMetaData();
