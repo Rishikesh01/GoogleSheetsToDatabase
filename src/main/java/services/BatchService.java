@@ -32,14 +32,13 @@ public class BatchService {
         String colNameStr = colNameList.stream()
                 .map(x -> (String) x)
                 .collect(Collectors.joining(","));
-
+        inputService.getTableCreationQuery();
         String tableName = inputService.getTableName();
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         int pkColumnName = repository.getPrimaryKey(tableName);
-
         //get list of years present and make list called batch
-        int yearOfAdmission = values.get(1).indexOf(pkColumnName);
+        int yearOfAdmission = Integer.parseInt(values.get(1).get(pkColumnName - 1).toString().substring(STARTING_INDEX, LAST_INDEX));
         List<List<Object>> batch = new ArrayList<>();
         /**
          start iterating rows and make new list at the beginning  of iteration and add elements.
@@ -48,7 +47,7 @@ public class BatchService {
          */
         for (List<Object> rows : values.subList(1, values.size())) {
             List<Object> currentList = new ArrayList<>();
-            int currentYearInRow = Integer.parseInt(rows.get(pkColumnName).toString().substring(STARTING_INDEX, LAST_INDEX));
+            int currentYearInRow = Integer.parseInt(rows.get(pkColumnName - 1).toString().substring(STARTING_INDEX, LAST_INDEX));
             /**
              check whether if current year in the row is same as first year of admission.
              if it is add the row to current list and add the current lis to batch.
@@ -56,9 +55,11 @@ public class BatchService {
              repository and run it in another thread
              */
             if (currentYearInRow != yearOfAdmission) {
-                yearOfAdmission = Integer.parseInt(rows.get(pkColumnName).toString().substring(STARTING_INDEX, LAST_INDEX));
+                yearOfAdmission = Integer.parseInt(rows.get(pkColumnName - 1).toString().substring(STARTING_INDEX, LAST_INDEX));
+                String finalTableName = tableName;
+                executor.submit(() -> repository.insertData(new ArrayList<>(batch), colNameStr, finalTableName));
                 inputService.getTableCreationQuery();
-                executor.submit(() -> repository.insertData(new ArrayList<>(batch), colNameStr));
+                tableName = inputService.getTableName();
                 batch.clear();
                 currentList.addAll(rows);
             } else {
@@ -66,5 +67,8 @@ public class BatchService {
                 batch.add(currentList);
             }
         }
+        String finalTableName1 = tableName;
+        executor.submit(() -> repository.insertData(new ArrayList<>(batch), colNameStr, finalTableName1));
+        executor.shutdown();
     }
 }

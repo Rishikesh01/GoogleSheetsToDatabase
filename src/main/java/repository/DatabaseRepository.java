@@ -108,7 +108,7 @@ public class DatabaseRepository {
         }
     }
 
-    public void insertData(final List<List<Object>> values, String columnNamesStr) {
+    public void insertData(final List<List<Object>> values, String columnNamesStr, String tableName) {
     }
 
     public int getPrimaryKey(String tableName) {
